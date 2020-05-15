@@ -1,0 +1,8 @@
+"dig.obj",
+"main.obj",
+"module.obj",
+"timer.obj",
+"onewire.obj",
+"key.obj",
+"iic.obj" 
+TO "3rd" 

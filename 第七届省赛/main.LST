@@ -1,0 +1,92 @@
+C51 COMPILER V9.01   MAIN                                                                  03/28/2018 18:12:10 PAGE 1   
+
+
+C51 COMPILER V9.01, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN main.OBJ
+COMPILER INVOKED BY: C:\Keil\C51\BIN\C51.EXE main.c BROWSE DEBUG OBJECTEXTEND
+
+line level    source
+
+   1          #include "module.h"
+   2          #include "timer.h"
+   3          #include "key.h"
+   4          #include "onewire.h"
+   5          
+   6          uchar mode = 1, temper = 0;
+   7          uint last_time = 60;
+   8          
+   9          bit led_flag = 0, play_flag = 0, temp_flag = 0;
+  10          void main()
+  11          {
+  12   1              uchar key;
+  13   1              led_on(~0x00);
+  14   1              module_off();
+  15   1              Timer2Init();
+  16   1              Timer1Init();
+  17   1              Timer0Init();
+  18   1              EA = 1;
+  19   1              while(1)
+  20   1              {
+  21   2                      key = Read_Key();
+  22   2                      if(key != 0xff)
+  23   2                      {
+  24   3                              switch(key)
+  25   3                              {
+  26   4                                      case 4: 
+  27   4                                              mode ++; 
+  28   4                                              if(mode >= 4) 
+  29   4                                                      mode = 1; 
+  30   4                                      break;
+  31   4                                      case 3:
+  32   4                                              last_time += 60;
+  33   4                                      break;
+  34   4                                      case 2:
+  35   4                                              last_time = 0;
+  36   4                                      break;
+  37   4                                      case 1:
+  38   4                                              play_flag = ~play_flag;
+  39   4                              }
+  40   3                      }
+  41   2                      if(led_flag == 1)
+  42   2                      {
+  43   3                              led_flag = 0;
+  44   3                              if(last_time != 0)
+  45   3                              {
+  46   4                                      if(mode == 1)
+  47   4                                              led_on(~0x01);
+  48   4                                      else if(mode == 2)
+  49   4                                              led_on(~0x02);
+  50   4                                      else if(mode == 3)
+  51   4                                              led_on(~0x04);
+  52   4                              }
+  53   3                              else
+  54   3                                      led_on(~0x00);
+  55   3                      }
+C51 COMPILER V9.01   MAIN                                                                  03/28/2018 18:12:10 PAGE 2   
+
+  56   2      
+  57   2                      if(temp_flag == 1)
+  58   2                      {
+  59   3                              temp_flag = 0;
+  60   3                              if(play_flag == 1)
+  61   3                              {
+  62   4                                      temper = Read_Tempe();
+  63   4                              }       
+  64   3                      }
+  65   2              }
+  66   1      
+  67   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    136    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      4    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      3    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

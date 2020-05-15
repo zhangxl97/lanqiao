@@ -1,0 +1,8 @@
+"dig.obj",
+"ds1302.obj",
+"main.obj",
+"mod.obj",
+"timer.obj",
+"kbd.obj",
+"iic.obj" 
+TO "7th" 

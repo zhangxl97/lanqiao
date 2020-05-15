@@ -1,0 +1,40 @@
+C51 COMPILER V9.01   MOD                                                                   05/13/2018 16:37:06 PAGE 1   
+
+
+C51 COMPILER V9.01, COMPILATION OF MODULE MOD
+OBJECT MODULE PLACED IN mod.OBJ
+COMPILER INVOKED BY: C:\Keil\C51\BIN\C51.EXE mod.c BROWSE DEBUG OBJECTEXTEND
+
+line level    source
+
+   1          #include "mod.h"
+   2          
+   3          void led_on(uchar led)
+   4          {
+   5   1              P2 = P2 & 0x0f | 0x80;
+   6   1              P0 = led;
+   7   1              P2  &= 0x0f;
+   8   1      
+   9   1      }
+  10          
+  11          void mod_off()
+  12          {
+  13   1              P2 = P2 & 0x0f | 0xa0;
+  14   1              P0 = 0x00;
+  15   1              P2  &= 0x0f;
+  16   1      
+  17   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     29    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

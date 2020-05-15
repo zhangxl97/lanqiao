@@ -1,0 +1,159 @@
+C51 COMPILER V9.01   MAIN                                                                  03/29/2018 16:29:18 PAGE 1   
+
+
+C51 COMPILER V9.01, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN main.OBJ
+COMPILER INVOKED BY: C:\Keil\C51\BIN\C51.EXE main.c BROWSE DEBUG OBJECTEXTEND
+
+line level    source
+
+   1          #include "module.h"
+   2          #include "ds1302.h"
+   3          #include "timer.h"
+   4          #include "dig.h"
+   5          #include "iic.h"
+   6          #include "key.h"
+   7          uchar sec, min, hour, wet, relay_flag = 0, buzz_flag = 0, wet_thr = 50;
+   8          bit play_flag = 0, mode = 0, led_flag = 0, module_flag = 0, adc_flag = 0, buzz_off = 0;
+   9          void Delay10ms();
+  10          void main()
+  11          {                         
+  12   1              uchar temp;
+  13   1              led_on(~0x00);
+  14   1              module_on(0x00);
+  15   1              Timer2Init();
+  16   1              DS1302_Init();
+  17   1              ADC_Init();
+  18   1      
+  19   1      //      Write_Eeprom(0x00, 0x00);
+  20   1              
+  21   1              wet_thr = Read_Eeprom(0x00);
+  22   1              Delay10ms();
+  23   1      
+  24   1              EA = 1;
+  25   1              while(1)
+  26   1              {
+  27   2                      temp = Read_Key();
+  28   2                      if(temp != 0xff)
+  29   2                      {
+  30   3                              switch(temp)
+  31   3                              {
+  32   4                                      case 1: 
+  33   4                                              if(play_flag == 0)
+  34   4                                                      mode = !mode; 
+  35   4                                      break;
+  36   4                                      case 2:
+  37   4                                              if(mode == 1)
+  38   4                                              {
+  39   5                                                      buzz_off = ~buzz_off;
+  40   5                                              }
+  41   4                                              else
+  42   4                                              {
+  43   5                                                      play_flag = !play_flag;
+  44   5                                                      if(play_flag == 0)
+  45   5                                                      {
+  46   6                                                              Write_Eeprom(0x00, wet_thr);
+  47   6                                                              Delay10ms();   
+  48   6                                                      }
+  49   5                                              }
+  50   4                                      break;
+  51   4                                      case 3:
+  52   4                                              if(mode == 1) 
+  53   4                                              {
+  54   5                                                      relay_flag = 1;
+  55   5                                              }
+C51 COMPILER V9.01   MAIN                                                                  03/29/2018 16:29:18 PAGE 2   
+
+  56   4                                              else if((mode == 0) && (play_flag == 1))
+  57   4                                              {
+  58   5                                                      wet_thr++;
+  59   5                                                      if(wet_thr > 99)
+  60   5                                                              wet_thr = 99;   
+  61   5                                              }
+  62   4                                      break;
+  63   4                                      case 4:
+  64   4                                              if(mode == 1) 
+  65   4                                              {
+  66   5                                                      relay_flag = 0;
+  67   5                                              }
+  68   4                                              else if((mode == 0) && (play_flag == 1))
+  69   4                                              {
+  70   5                                                      if(wet_thr == 0)
+  71   5                                                              wet_thr = 1;
+  72   5                                                      wet_thr--;
+  73   5                                                              
+  74   5                                              }
+  75   4                                      break;
+  76   4                              }
+  77   3                      }
+  78   2                      if(led_flag == 1)
+  79   2                      {
+  80   3                              led_flag = 0;
+  81   3                              if(mode == 0)
+  82   3                              {
+  83   4                                      led_on(~0x01);
+  84   4                              }
+  85   3                              else
+  86   3                              {
+  87   4                                      led_on(~0x02);
+  88   4                              }
+  89   3                      }
+  90   2      
+  91   2                      if(adc_flag == 1)
+  92   2                      {
+  93   3                              adc_flag = 0;
+  94   3                              temp = Read_ADC();
+  95   3                              wet = temp * 99 / 255;  
+  96   3                              if(mode == 0)
+  97   3                              {
+  98   4                                      if(wet < wet_thr)
+  99   4                                              relay_flag = 1;
+ 100   4                                      else
+ 101   4                                              relay_flag = 0;
+ 102   4                              }                                                          
+ 103   3                      }
+ 104   2      
+ 105   2                      if(module_flag ==1)
+ 106   2                      {
+ 107   3                              module_flag = 0;
+ 108   3                              if(mode == 1)
+ 109   3                              {
+ 110   4                                      if((wet < wet_thr) && (buzz_off == 0))
+ 111   4                                              buzz_flag = 1;
+ 112   4                                      else
+ 113   4                                              buzz_flag = 0;
+ 114   4                              }
+ 115   3                              else
+ 116   3                                      buzz_flag = 0;
+ 117   3                              temp = buzz_flag << 6 | relay_flag << 4;
+C51 COMPILER V9.01   MAIN                                                                  03/29/2018 16:29:18 PAGE 3   
+
+ 118   3                              module_on(temp);
+ 119   3                      }
+ 120   2              }
+ 121   1      }
+ 122          void Delay10ms()                //@11.0592MHz
+ 123          {
+ 124   1              unsigned char i, j;
+ 125   1      
+ 126   1              i = 108;
+ 127   1              j = 145;
+ 128   1              do
+ 129   1              {
+ 130   2                      while (--j);
+ 131   2              } while (--i);
+ 132   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    262    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      7       1
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      6    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

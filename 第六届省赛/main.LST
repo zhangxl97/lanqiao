@@ -1,0 +1,143 @@
+C51 COMPILER V9.01   MAIN                                                                  03/27/2018 09:24:44 PAGE 1   
+
+
+C51 COMPILER V9.01, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN main.OBJ
+COMPILER INVOKED BY: C:\Keil\C51\BIN\C51.EXE main.c BROWSE DEBUG OBJECTEXTEND
+
+line level    source
+
+   1          #include "timer.h"
+   2          #include "dig.h"
+   3          #include "module.h"
+   4          #include "key.h"
+   5          #include "ds1302.h"
+   6          #include "onewire.h"
+   7          
+   8          uchar play_flag = 1;
+   9          uchar code SET_INT[] = {1, 5, 30, 60};
+  10          uchar set_inter = 1, set_flag = 0, sec, min, hour;
+  11          uchar temper;
+  12          uchar mem_temp[10], index = 0;
+  13          
+  14          bit time_flag = 0, temp_flag = 0, end_1s = 0;
+  15          
+  16          extern uchar TIME[7];
+  17          void main()
+  18          {
+  19   1              uchar temp;
+  20   1              led_on(~0x00);
+  21   1              module_off();
+  22   1              DS1302_Init();
+  23   1              Timer2Init();
+  24   1              Timer1Init();
+  25   1              Timer0Init();
+  26   1              EA = 1;
+  27   1      
+  28   1              while(1)
+  29   1              {
+  30   2                      temp = Read_Key();
+  31   2                      if(temp != 0xff)
+  32   2                      {
+  33   3                              switch(temp)
+  34   3                              {
+  35   4                                      case 4:
+  36   4                                              if(play_flag == 1)
+  37   4                                              {
+  38   5                                                      set_flag ++;
+  39   5                                                      if(set_flag >= 4)
+  40   5                                                              set_flag = 0;
+  41   5                                                      set_inter = SET_INT[set_flag];
+  42   5                                              }
+  43   4                                                      
+  44   4                                      break;
+  45   4      
+  46   4                                      case 3:
+  47   4                                              if(play_flag == 1)
+  48   4                                              {
+  49   5                                                      play_flag = 2;  
+  50   5                                                      TR0 = 1;
+  51   5                                              }
+  52   4                                      break;
+  53   4      
+  54   4                                      case 2:
+  55   4                                              if(play_flag == 3)
+C51 COMPILER V9.01   MAIN                                                                  03/27/2018 09:24:44 PAGE 2   
+
+  56   4                                              {
+  57   5                                                      index++;
+  58   5                                                      if(index >= 10)
+  59   5                                                              index = 0;
+  60   5                                                      TR1 = 0;
+  61   5                                                      led_on(~0x00);
+  62   5                                              }
+  63   4                                      break;
+  64   4      
+  65   4                                      case 1:
+  66   4                                              if(play_flag == 3)
+  67   4                                              {
+  68   5                                                      index = 0;
+  69   5                                                      play_flag = 1;
+  70   5                                                      set_flag = 0;
+  71   5                                                      TR1 = 0;
+  72   5                                                      TR0 = 0;
+  73   5                                              }
+  74   4                                      break;
+  75   4                              }
+  76   3      
+  77   3                      }
+  78   2      
+  79   2                      if(time_flag == 1)
+  80   2                      {
+  81   3                              time_flag = 0;
+  82   3                              Read_Time();
+  83   3      
+  84   3                              sec = TIME[0] / 16 * 10 + TIME[0] % 16;
+  85   3                              min = TIME[1] / 16 * 10 + TIME[1] % 16;
+  86   3                              hour = TIME[2] / 16 * 10 + TIME[2] % 16;
+  87   3                      }
+  88   2      
+  89   2                      if((temp_flag == 1) && (play_flag == 2))
+  90   2                      {
+  91   3                              temp_flag = 0;
+  92   3                              temper = Read_Temp();
+  93   3                      }
+  94   2      
+  95   2                      if( (end_1s == 1) && (play_flag == 2))
+  96   2                      {
+  97   3                              end_1s = 0;
+  98   3                              set_inter--;
+  99   3                              if(set_inter==0)
+ 100   3                              {
+ 101   4                                      mem_temp[index] = temper;
+ 102   4                                      set_inter = SET_INT[set_flag];
+ 103   4                                      index++;
+ 104   4                              }
+ 105   3                              if(index >= 10)
+ 106   3                              {
+ 107   4                                      TR0 = 0;
+ 108   4                                      play_flag = 3;
+ 109   4                                      index = 0;
+ 110   4                                      TR1 = 1;
+ 111   4                              }
+ 112   3                      }
+ 113   2              }
+ 114   1      
+ 115   1      
+ 116   1      }
+
+C51 COMPILER V9.01   MAIN                                                                  03/27/2018 09:24:44 PAGE 3   
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    264    ----
+   CONSTANT SIZE    =      4    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     18    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      3    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

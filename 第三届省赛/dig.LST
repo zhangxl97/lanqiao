@@ -1,0 +1,60 @@
+C51 COMPILER V9.01   DIG                                                                   03/30/2018 10:42:03 PAGE 1   
+
+
+C51 COMPILER V9.01, COMPILATION OF MODULE DIG
+OBJECT MODULE PLACED IN dig.OBJ
+COMPILER INVOKED BY: C:\Keil\C51\BIN\C51.EXE dig.c BROWSE DEBUG OBJECTEXTEND
+
+line level    source
+
+   1          #include "dig.h"
+   2          
+   3          
+   4          uchar code DIG_CODE[] = {0xc0, 0xf9, 0xa4, 0xb0, 0x99, 0x92, 0x82, 0xf8, 0x80, 0x90};
+   5          uchar dis_code[8], dis_flag = 0;
+   6          
+   7          extern uchar t_max, t_min;
+   8          extern uchar tempe;
+   9          
+  10          void set()
+  11          {
+  12   1              dis_code[0] = DIG_CODE[t_max / 10];
+  13   1              dis_code[1] = DIG_CODE[t_max % 10];
+  14   1              dis_code[2] = DIG_CODE[t_min / 10];
+  15   1              dis_code[3] = DIG_CODE[t_min % 10];
+  16   1              dis_code[4] = 0xff;
+  17   1              dis_code[5] = 0xff;
+  18   1              dis_code[6] = DIG_CODE[tempe % 100 / 10];
+  19   1              dis_code[7] = DIG_CODE[tempe % 10];
+  20   1      }
+  21          
+  22          void display()
+  23          {
+  24   1              set();
+  25   1              P2 = P2 & 0x0f | 0xe0;
+  26   1              P0 = 0xff;
+  27   1              P2 &= 0x0f;
+  28   1              P2 = P2 & 0x0f | 0xc0;
+  29   1              P0 = 0x01 << dis_flag;
+  30   1              P2 &= 0x0f;
+  31   1              P2 = P2 & 0x0f | 0xe0;
+  32   1              P0 = dis_code[dis_flag];
+  33   1              P2 &= 0x0f;
+  34   1      
+  35   1              if(++dis_flag == 8)
+  36   1                      dis_flag = 0;
+  37   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    149    ----
+   CONSTANT SIZE    =     10    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      9    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

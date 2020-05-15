@@ -1,0 +1,177 @@
+C51 COMPILER V9.01   MAIN                                                                  05/19/2018 23:00:41 PAGE 1   
+
+
+C51 COMPILER V9.01, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN main.OBJ
+COMPILER INVOKED BY: C:\Keil\C51\BIN\C51.EXE main.c BROWSE DEBUG OBJECTEXTEND
+
+line level    source
+
+   1          #include "mod.h"
+   2          #include "iic.h"
+   3          #include "timer.h"
+   4          #include "dig.h"
+   5          #include "ultra.h"
+   6          #include "key.h"
+   7          
+   8          uchar led = 0x00, mod = 0x00, time_1 = 2, time_2 = 4, mode = 0, distance = 99, type = 0, play = 0;
+   9          uchar start_time = 0, set_flag = 0;
+  10          uint ADC_val;
+  11          bit ADC_flag = 0, MOD_flag = 0, flash = 0, ultra_flag = 0, start = 0, sett = 0;
+  12          void main()
+  13          {
+  14   1              uchar key;
+  15   1      
+  16   1      //      Write_eeprom(0x00, 0x00);
+  17   1      //      Write_eeprom(0x01, 0x00);
+  18   1              time_1 = Read_eeprom(0x00);
+  19   1              time_2 = Read_eeprom(0x01); 
+  20   1      
+  21   1              led_on(~led);
+  22   1              mod_on(mod);
+  23   1              ADC_Init();
+  24   1              Timer0Init();
+  25   1              Timer1Init();
+  26   1              Timer2Init();
+  27   1              while(1)
+  28   1              {
+  29   2                      key = Read_Key();
+  30   2                      if(key!=0xff)
+  31   2                      {
+  32   3                              switch(key)
+  33   3                              {
+  34   4                                      case 4:
+  35   4                                              if((mode == 1) && (start == 0))
+  36   4                                              {
+  37   5                                                      TR0 = 1; 
+  38   5                                                      start = 1;
+  39   5                                                      mod = mod & 0xef | 0x10; 
+  40   5                                                      if(type == 1)
+  41   5                                                              start_time = time_1;
+  42   5                                                      else
+  43   5                                                              start_time = time_2;
+  44   5                                              }
+  45   4                                      break;
+  46   4      
+  47   4                                      case 3:
+  48   4                                              if(start == 1)
+  49   4                                              {
+  50   5                                                      TR0 = !TR0;
+  51   5                                                      if(TR0 == 0)
+  52   5                                                      {
+  53   6                                                              mode = 3;
+  54   6                                                              mod = mod & 0xef; 
+  55   6                                                              flash = 1;
+C51 COMPILER V9.01   MAIN                                                                  05/19/2018 23:00:41 PAGE 2   
+
+  56   6                                                      }
+  57   5                                                      else
+  58   5                                                      {
+  59   6                                                              mode = 1;
+  60   6                                                              mod = mod & 0xef | 0x10; 
+  61   6                                                              flash = 0;
+  62   6                                                      }
+  63   5                                              }
+  64   4                                      break;
+  65   4      
+  66   4                                      case 2:
+  67   4                                              if(mode == 0)
+  68   4                                              {
+  69   5                                                      sett = 1;
+  70   5                                                      set_flag++;
+  71   5                                                      if(set_flag >= 3)
+  72   5                                                      {
+  73   6                                                              set_flag = 0;
+  74   6                                                              sett = 0;
+  75   6      
+  76   6                                                              Write_eeprom(0x00, time_1);
+  77   6                                                              Write_eeprom(0x01, time_2);
+  78   6                                                      }
+  79   5                                              }
+  80   4                                      break;
+  81   4      
+  82   4                                      case 1:
+  83   4                                              if(sett)
+  84   4                                              {
+  85   5                                                      if(set_flag == 1)
+  86   5                                                      {
+  87   6                                                              time_1++;
+  88   6                                                              if(time_1 > 10)
+  89   6                                                                      time_1 = 1;
+  90   6                                                      }
+  91   5                                                      else if(set_flag == 2)
+  92   5                                                      {
+  93   6                                                              time_2++;
+  94   6                                                              if(time_2 > 10)
+  95   6                                                                      time_2 = 1;
+  96   6                                                      }
+  97   5                                              }
+  98   4                                      break;
+  99   4      
+ 100   4                              }
+ 101   3                      }
+ 102   2                      if((ADC_flag==1) && (start == 0))
+ 103   2                      {
+ 104   3                              ADC_val = Read_ADC();
+ 105   3                              if(ADC_val < 1000)
+ 106   3                              {
+ 107   4                                      led = led & 0xf8 | 0x01;
+ 108   4                                      mod = mod & 0xbf;
+ 109   4                                      flash = 0;
+ 110   4                                      mode = 0;
+ 111   4                              }
+ 112   3                              else if((ADC_val >= 4000) && (flash == 0))
+ 113   3                              {
+ 114   4                                      led = led & 0xf8;
+ 115   4                                      flash = 1;
+ 116   4                                      mod = mod & 0xbf | 0x40; 
+ 117   4                                      mode = 2;
+C51 COMPILER V9.01   MAIN                                                                  05/19/2018 23:00:41 PAGE 3   
+
+ 118   4                              }
+ 119   3                              else if((ADC_val>=1000) && (ADC_val<4000))
+ 120   3                              {       
+ 121   4                                      led = led & 0xf8 | 0x02;
+ 122   4                                      mod = mod & 0xbf;
+ 123   4                                      flash = 0;
+ 124   4                                      mode = 1;
+ 125   4                              }
+ 126   3      
+ 127   3                              ADC_flag = 0;
+ 128   3                      }
+ 129   2      
+ 130   2                      if((mode >= 1) && (ultra_flag == 1) && (start == 0))
+ 131   2                      {
+ 132   3                              Measure();
+ 133   3                              if(distance < 30 )
+ 134   3                                      type = 1;
+ 135   3                              else
+ 136   3                                      type = 2;
+ 137   3                              ultra_flag = 0;
+ 138   3                      }
+ 139   2      
+ 140   2      
+ 141   2      
+ 142   2                      if(MOD_flag == 1)
+ 143   2                      {
+ 144   3                              led_on(~led);
+ 145   3                              mod_on(mod);
+ 146   3      
+ 147   3                              MOD_flag = 0;
+ 148   3                      }
+ 149   2              }       
+ 150   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    382    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     12    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      6    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

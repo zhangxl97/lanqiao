@@ -1,0 +1,170 @@
+C51 COMPILER V9.01   MAIN                                                                  05/13/2018 20:32:26 PAGE 1   
+
+
+C51 COMPILER V9.01, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN main.OBJ
+COMPILER INVOKED BY: C:\Keil\C51\BIN\C51.EXE main.c BROWSE DEBUG OBJECTEXTEND
+
+line level    source
+
+   1          #include "mod.h"
+   2          #include "dig.h"
+   3          #include "timer.h"
+   4          #include "ds1302.h"
+   5          #include "iic.h"
+   6          #include "onewire.h"
+   7          #include "KEY.h"
+   8          #include "stdio.h"
+   9          #include "string.h"
+  10          
+  11          #define VOLT_MODE 0x03
+  12          #define LIGHT_MODE 0x01
+  13          uchar dis_flag = 0, sec, min, hour, led;
+  14          uchar wet, tempe, light, receive[7];
+  15          uint times = 0, dis_times = 0;
+  16          uint result[5];
+  17          bit wet_flag = 0, mode = 0, close = 0, send_flag = 0, first = 0;
+  18          
+  19          extern uchar rec_flag;
+  20          void main()
+  21          {
+  22   1              uchar i,key, send[25], index = 0, index_send = 0;
+  23   1              led_on(~0x00);
+  24   1              mod_off();
+  25   1      
+  26   1      //      Write_eeprom(0x00, 0x01);
+  27   1      //      Write_eeprom(0x01, 0x02);
+  28   1      //      Write_eeprom(0x02, 0x03);
+  29   1      //      Write_eeprom(0x03, 0x04);
+  30   1      //      Write_eeprom(0x04, 0x05);
+  31   1      
+  32   1              for(i=0;i<5;i++)
+  33   1                      result[i] = Read_eeprom(i);
+  34   1      
+  35   1              DS1302_Init();
+  36   1              UartInit();
+  37   1              Timer0Init();
+  38   1              Timer1Init();
+  39   1              while(1)
+  40   1              {
+  41   2                      key = Read_Key();
+  42   2                      if(key != 0xff)
+  43   2                      {  
+  44   3                              switch(key)
+  45   3                              {
+  46   4                                      case 4: mode = !mode; break;
+  47   4                                      case 3: dis_flag++; if(dis_flag>=3) dis_flag = 0; break;
+  48   4                              }
+  49   3                      }
+  50   2                      if(wet_flag == 1)
+  51   2                      {       
+  52   3                              AD_Init(LIGHT_MODE);    
+  53   3                              wet = Read_AD() * 0.389;
+  54   3                              
+  55   3                          AD_Init(VOLT_MODE);
+C51 COMPILER V9.01   MAIN                                                                  05/13/2018 20:32:26 PAGE 2   
+
+  56   3                              light = Read_AD() * 100.0 / 255.0;
+  57   3      
+  58   3                              tempe = Read_Temp();
+  59   3                              
+  60   3                              if(mode == 0)
+  61   3                              {
+  62   4                                      led = led & 0xfd | 0x01;
+  63   4                              }
+  64   3                              else
+  65   3                                      led = led & 0xfe | 0x02;
+  66   3      
+  67   3                              if(light < 60)
+  68   3                              {
+  69   4                                      led = led | 0x04;
+  70   4                                      close = 1;
+  71   4                              }
+  72   3                              else 
+  73   3                              {
+  74   4                                      led &= 0xfb;
+  75   4                                      close = 0;
+  76   4                               }
+  77   3                              led_on(~led);
+  78   3                              wet_flag = 0;
+  79   3                      }
+  80   2      
+  81   2                      if(send_flag == 1)
+  82   2                      {
+  83   3                              if(mode == 0)
+  84   3                              {
+  85   4                                      if(strcmp(receive,"AAASSS")==0)
+  86   4                                      {
+  87   5                                              sprintf(send, "{%d-%d%%}{%d-%d-%d}{%d}\r\n", (uint)tempe, (uint)wet, (uint)hour, (uint)min, (uint)sec
+             -, (uint)close);
+  88   5                                              Send_String(send);
+  89   5                                      }
+  90   4                                      else
+  91   4                                      {
+  92   5                                              rec_flag = 0;
+  93   5                                              for(i = 0;i<6;i++)
+  94   5                                                      receive[i] = '\0';
+  95   5                                      }
+  96   4                              }
+  97   3                              else if(mode == 1)
+  98   3                              {
+  99   4                                      if(strcmp(receive,"AAASSS")==0)
+ 100   4                                      {       
+ 101   5                                              sprintf(send, "{%d-%d%%}{%d-%d-%d}{%d}\r\n", (uint)tempe, (uint)wet, (uint)hour, (uint)min, (uint)sec
+             -, (uint)result[index_send]);
+ 102   5                                              Send_String(send);
+ 103   5                                              index_send++;
+ 104   5                                              if(index_send>=5)
+ 105   5                                                      index_send = 0;
+ 106   5                                      }
+ 107   4                                      else
+ 108   4                                      {
+ 109   5                                              rec_flag = 0;
+ 110   5                                              for(i = 0;i<6;i++)
+ 111   5                                                      receive[i] = '\0';
+ 112   5                                      }
+ 113   4                              }
+ 114   3                              send_flag = 0;
+ 115   3                      }
+C51 COMPILER V9.01   MAIN                                                                  05/13/2018 20:32:26 PAGE 3   
+
+ 116   2      
+ 117   2                      if(mode == 1)
+ 118   2                      {
+ 119   3                              if((close == 1) && (first == 0))
+ 120   3                              {
+ 121   4                                      TR1 = 1;
+ 122   4                                      first = 1;      
+ 123   4                              } 
+ 124   3                              else if((close == 0) && (first == 1))
+ 125   3                              {
+ 126   4                                      TR1 = 0;
+ 127   4                                      first = 0;
+ 128   4                                      result[index] = times;
+ 129   4                                      dis_times = times;
+ 130   4                                      times = 0;
+ 131   4      
+ 132   4                                      Write_eeprom(index, dis_times);
+ 133   4      
+ 134   4                                      index++;
+ 135   4                                      if(index >= 5)
+ 136   4                                              index = 0;
+ 137   4                              }
+ 138   3                      }
+ 139   2      
+ 140   2              }
+ 141   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    525    ----
+   CONSTANT SIZE    =     33    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     29      28
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      5    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

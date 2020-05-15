@@ -1,0 +1,9 @@
+"dig.obj",
+"ds1302.obj",
+"key.obj",
+"iic.obj",
+"main.obj",
+"mod.obj",
+"onewire.obj",
+"timer.obj" 
+TO "5th" 

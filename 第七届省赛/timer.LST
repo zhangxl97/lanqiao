@@ -1,0 +1,162 @@
+C51 COMPILER V9.01   TIMER                                                                 03/28/2018 18:15:08 PAGE 1   
+
+
+C51 COMPILER V9.01, COMPILATION OF MODULE TIMER
+OBJECT MODULE PLACED IN timer.OBJ
+COMPILER INVOKED BY: C:\Keil\C51\BIN\C51.EXE timer.c BROWSE DEBUG OBJECTEXTEND
+
+line level    source
+
+   1          #include "timer.h"
+   2          #include "dig.h"
+   3          
+   4          sbit PWM = P3^4;
+   5          
+   6          extern uint last_time;
+   7          extern uchar mode;
+   8          extern bit led_flag, temp_flag;
+   9          
+  10          void Timer2Init(void)           //1毫秒@11.0592MHz
+  11          {
+  12   1              AUXR |= 0x04;           //定时器时钟1T模式
+  13   1              T2L = 0xCD;             //设置定时初值
+  14   1              T2H = 0xD4;             //设置定时初值
+  15   1              AUXR |= 0x10;           //定时器2开始计时
+  16   1              IE2 |= 0x04;
+  17   1      }
+  18          
+  19          void Timer0Init(void)           //1毫秒@11.0592MHz
+  20          {
+  21   1              AUXR |= 0x80;           //定时器时钟1T模式
+  22   1              TMOD &= 0xF0;           //设置定时器模式
+  23   1              TL0 = 0xCD;             //设置定时初值
+  24   1              TH0 = 0xD4;             //设置定时初值
+  25   1              TF0 = 0;                //清除TF0标志
+  26   1              TR0 = 1;                //定时器0开始计时
+  27   1      
+  28   1              ET0 = 1;
+  29   1      }
+  30          void Timer1Init(void)           //20微秒@11.0592MHz
+  31          {
+  32   1              AUXR |= 0x40;           //定时器时钟1T模式
+  33   1              TMOD &= 0x0F;           //设置定时器模式
+  34   1              TL1 = 0x23;             //设置定时初值
+  35   1              TH1 = 0xFF;             //设置定时初值
+  36   1              TF1 = 0;                //清除TF1标志
+  37   1              TR1 = 1;                //定时器1开始计时
+  38   1              ET1 = 1;
+  39   1      }
+  40          
+  41          
+  42          
+  43          void Timer1_ISR() interrupt 3
+  44          {
+  45   1              static uint k = 0;
+  46   1              if(last_time > 0)
+  47   1              {
+  48   2                      k++;
+  49   2                      if(mode == 1)
+  50   2                      {
+  51   3                              if(k < 9)
+  52   3                              {
+  53   4                                      PWM = 1;
+  54   4                              }
+  55   3                              else if(k < 47)
+C51 COMPILER V9.01   TIMER                                                                 03/28/2018 18:15:08 PAGE 2   
+
+  56   3                              {
+  57   4                                      PWM = 0;
+  58   4                              } 
+  59   3                              else
+  60   3                              {
+  61   4                                      k = 0;
+  62   4                                      PWM = 1;
+  63   4                              }
+  64   3                      }
+  65   2                      else if(mode == 2)
+  66   2                      {
+  67   3                              if(k < 14)
+  68   3                              {
+  69   4                                      PWM = 1;
+  70   4                              }
+  71   3                              else if(k < 47)
+  72   3                              {
+  73   4                                      PWM = 0;
+  74   4                              } 
+  75   3                              else
+  76   3                              {
+  77   4                                      k = 0;
+  78   4                                      PWM = 1;
+  79   4                              }
+  80   3                      }
+  81   2                      else
+  82   2                      {
+  83   3                              if(k < 33)
+  84   3                              {
+  85   4                                      PWM = 1;
+  86   4                              }
+  87   3                              else if(k < 47)
+  88   3                              {
+  89   4                                      PWM = 0;
+  90   4                              } 
+  91   3                              else
+  92   3                              {
+  93   4                                      k = 0;
+  94   4                                      PWM = 1;
+  95   4                              }
+  96   3                      }
+  97   2      
+  98   2              }
+  99   1              else
+ 100   1              {
+ 101   2                      k = 0;
+ 102   2                      PWM = 0;
+ 103   2              }
+ 104   1      }
+ 105          
+ 106          void Timer0_ISR() interrupt 1
+ 107          {
+ 108   1              static uint t_1ms = 0;
+ 109   1              t_1ms++;
+ 110   1              if(t_1ms >= 999)
+ 111   1              {
+ 112   2                      t_1ms = 0;
+ 113   2                      if(last_time != 0)
+ 114   2                      {
+ 115   3                              last_time--;
+ 116   3                      }
+ 117   2              }
+C51 COMPILER V9.01   TIMER                                                                 03/28/2018 18:15:08 PAGE 3   
+
+ 118   1      }
+ 119          void Timer2_ISR() interrupt 12
+ 120          {
+ 121   1              static uint i = 0, j = 0;
+ 122   1              i++;
+ 123   1              j++;
+ 124   1              if(i >= 200)
+ 125   1              {
+ 126   2                      i = 0;
+ 127   2                      led_flag = 1;
+ 128   2              }
+ 129   1              if(j >= 537)
+ 130   1              {
+ 131   2                      j = 0;
+ 132   2                      temp_flag = 1;
+ 133   2              }
+ 134   1              display();
+ 135   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    361    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      8    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

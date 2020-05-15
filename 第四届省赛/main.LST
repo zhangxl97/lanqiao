@@ -1,0 +1,98 @@
+C51 COMPILER V9.01   MAIN                                                                  03/29/2018 22:40:33 PAGE 1   
+
+
+C51 COMPILER V9.01, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN main.OBJ
+COMPILER INVOKED BY: C:\Keil\C51\BIN\C51.EXE main.c BROWSE DEBUG OBJECTEXTEND
+
+line level    source
+
+   1          #include "module.h"
+   2          #include "timer.h"
+   3          #include "dig.h"
+   4          #include "key.h"
+   5          #include "iic.h"
+   6          uchar rate = 50; // 0.5 元 即50分
+   7          uint volumn = 0, price = 0; // 总量单位为每10毫升, 价格单位为分
+   8          bit start_flag = 0, relay_flag = 0, light_flag = 0; 
+   9          extern uint t_1ms;
+  10          void main()
+  11          {
+  12   1              uchar temp;
+  13   1              uint volt;
+  14   1              led_on(~0x00);
+  15   1              relay_off();
+  16   1              ADC_Init();
+  17   1              Timer2Init();
+  18   1              Timer0Init();
+  19   1              EA = 1;
+  20   1              while(1)
+  21   1              {
+  22   2                      temp = Read_Key();
+  23   2                      if(temp != 0xff)
+  24   2                      {
+  25   3                              switch(temp)
+  26   3                              {
+  27   4                                      case 1:
+  28   4                                              if(start_flag == 0)
+  29   4                                              {                
+  30   5                                                      volumn = 0;
+  31   5                                                      t_1ms = 0;
+  32   5                                                      start_flag = 1; 
+  33   5                                                      TR0 = 1;
+  34   5                                              }
+  35   4                                      break;
+  36   4      
+  37   4                                      case 2:
+  38   4                                              if(start_flag == 1)
+  39   4                                              {
+  40   5                                                      start_flag = 0;
+  41   5                                                      price = volumn / 2;
+  42   5                                                      TR0 = 0;
+  43   5                                              }
+  44   4                                      break;
+  45   4                              }
+  46   3                      }
+  47   2      
+  48   2                      if(relay_flag == 1)
+  49   2                      {
+  50   3                              relay_flag = 0;
+  51   3                              if(start_flag == 1)
+  52   3                              {
+  53   4                                      relay_on();
+  54   4                              }
+  55   3                              else
+C51 COMPILER V9.01   MAIN                                                                  03/29/2018 22:40:33 PAGE 2   
+
+  56   3                              {
+  57   4                                      relay_off();
+  58   4                              }
+  59   3                      }
+  60   2                      if(light_flag == 1)
+  61   2                      {
+  62   3                              light_flag = 0;
+  63   3                              temp = Read_ADC();
+  64   3                              volt = temp * 5000.0 / 255.0;
+  65   3                              if(volt < 1250)
+  66   3                                      led_on(~0x01);
+  67   3                              else
+  68   3                                      led_on(~0x00);
+  69   3      
+  70   3                      }
+  71   2              }
+  72   1      
+  73   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    154    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      5       1
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      3    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

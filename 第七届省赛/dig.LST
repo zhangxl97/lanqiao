@@ -1,0 +1,77 @@
+C51 COMPILER V9.01   DIG                                                                   03/28/2018 18:12:11 PAGE 1   
+
+
+C51 COMPILER V9.01, COMPILATION OF MODULE DIG
+OBJECT MODULE PLACED IN dig.OBJ
+COMPILER INVOKED BY: C:\Keil\C51\BIN\C51.EXE dig.c BROWSE DEBUG OBJECTEXTEND
+
+line level    source
+
+   1          #include "dig.h"
+   2          
+   3          uchar code DIG_CODE[] = {0xc0, 0xf9, 0xa4, 0xb0, 0x99, 0x92, 0x82, 0xf8, 0x80, 0x90};
+   4          
+   5          uchar dis_code[8], dis_flag = 0;
+   6          
+   7          extern uchar mode, temper ;
+   8          extern uint last_time;
+   9          extern bit play_flag;
+  10          void set()
+  11          {
+  12   1              if(play_flag == 0)
+  13   1              {
+  14   2                      dis_code[0] =  0xbf;
+  15   2                      dis_code[1] =  DIG_CODE[mode];
+  16   2                      dis_code[2] =  0xbf;
+  17   2                      dis_code[3] =  0xff;
+  18   2                      dis_code[4] =  DIG_CODE[last_time / 1000];
+  19   2                      dis_code[5] =  DIG_CODE[last_time % 1000 / 100];
+  20   2                      dis_code[6] =  DIG_CODE[last_time % 100 / 10];
+  21   2                      dis_code[7] =  DIG_CODE[last_time % 10];
+  22   2              }
+  23   1              else
+  24   1              {
+  25   2                      dis_code[0] =  0xbf;
+  26   2                      dis_code[1] =  DIG_CODE[4];
+  27   2                      dis_code[2] =  0xbf;
+  28   2                      dis_code[3] =  0xff;
+  29   2                      dis_code[4] =  0xff;
+  30   2                      dis_code[5] =  DIG_CODE[temper / 10];
+  31   2                      dis_code[6] =  DIG_CODE[temper % 10];
+  32   2                      dis_code[7] =  0xc6;
+  33   2              }
+  34   1      }
+  35          
+  36          void display()
+  37          {
+  38   1              set();
+  39   1              P2 = P2 & 0x0f | 0xe0;
+  40   1              P0 = 0xff;
+  41   1              P2 &= 0x0f;
+  42   1              P2 = P2 & 0x0f | 0xc0;
+  43   1              P0 = 0x01<<dis_flag;
+  44   1              P2 &= 0x0f;
+  45   1              P2 = P2 & 0x0f | 0xe0;
+  46   1              P0 = dis_code[dis_flag];
+  47   1              P2 &= 0x0f;
+  48   1              
+  49   1              if(++dis_flag == 8)
+  50   1                      dis_flag = 0;   
+  51   1      
+  52   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+C51 COMPILER V9.01   DIG                                                                   03/28/2018 18:12:11 PAGE 2   
+
+   CODE SIZE        =    269    ----
+   CONSTANT SIZE    =     10    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      9    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

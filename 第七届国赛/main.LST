@@ -1,0 +1,291 @@
+C51 COMPILER V9.01   MAIN                                                                  05/23/2018 21:04:03 PAGE 1   
+
+
+C51 COMPILER V9.01, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN main.OBJ
+COMPILER INVOKED BY: C:\Keil\C51\BIN\C51.EXE main.c BROWSE DEBUG OBJECTEXTEND
+
+line level    source
+
+   1          #include "mod.h"
+   2          #include "timer.h"
+   3          #include "dig.h"
+   4          #include "kbd.h"
+   5          #include "ds1302.h"
+   6          #include "iic.h"
+   7          
+   8          uchar hour, min, sec, play = 0, flash = 0, index_hour, index_min, index_sec;
+   9          uint volt, volt_h = 2000, volt_l = 1000;
+  10          long uint fre = 0, per = 0;
+  11          bit ad_flag = 0, index, volt_larger = 0, volt_smaller = 0;
+  12          extern uchar TIME[7];
+  13          void main()
+  14          {
+  15   1              uchar temp;
+  16   1              led_off();      
+  17   1              ADC_Init();
+  18   1              mod_off();
+  19   1              DS1302_Init();
+  20   1              volt = Read_AD();
+  21   1      
+  22   1      //      Write_eeprom(0x00, 0x00);
+  23   1      //      Write_eeprom(0x01, 0x00);
+  24   1      //      Write_eeprom(0x02, 0x00);
+  25   1      //      Write_eeprom(0x03, 0x00);
+  26   1      //      Write_eeprom(0x04, 0x00);
+  27   1      //      Write_eeprom(0x05, 0x00);
+  28   1      //      Write_eeprom(0x06, 0x00);
+  29   1      //      Write_eeprom(0x07, 0x00);
+  30   1      
+  31   1              volt_h = Read_eeprom(0x00);
+  32   1              volt_h = (volt_h << 8) | Read_eeprom(0x01);
+  33   1              volt_l = Read_eeprom(0x02);
+  34   1              volt_l = (volt_l << 8) | Read_eeprom(0x03);     
+  35   1              
+  36   1              index = Read_eeprom(0x04);
+  37   1              index_hour = Read_eeprom(0x05); 
+  38   1              index_min = Read_eeprom(0x06); 
+  39   1              index_sec = Read_eeprom(0x07); 
+  40   1      
+  41   1              Timer0Init();
+  42   1              Timer2Init();
+  43   1      
+  44   1              while(1)
+  45   1              {
+  46   2                      temp = Read_Kbd();
+  47   2                      if(temp != 0xff)
+  48   2                      {
+  49   3                              switch(temp)
+  50   3                              {
+  51   4                                      case 0:
+  52   4                                              play = 0;
+  53   4                                              flash = 0;
+  54   4                                      break;
+  55   4      
+C51 COMPILER V9.01   MAIN                                                                  05/23/2018 21:04:03 PAGE 2   
+
+  56   4                                      case 12:
+  57   4                                              if(play == 0)
+  58   4                                              {
+  59   5                                                      flash++;
+  60   5                                                      if(flash > 3)
+  61   5                                                              flash = 1;
+  62   5                                              }
+  63   4                                              else if(play == 1)
+  64   4                                              {
+  65   5                                                      flash = 1;
+  66   5                                                      play = 2;
+  67   5                                              }
+  68   4                                              else if(play == 2)
+  69   4                                              {
+  70   5                                                      flash++;
+  71   5                                                      if(flash > 2)
+  72   5                                                              flash = 1;
+  73   5                                              }
+  74   4                                              else if(play == 3)
+  75   4                                              {
+  76   5                                                      flash = !flash;
+  77   5                                              }
+  78   4                                      break;
+  79   4      
+  80   4      
+  81   4                                      case 1:
+  82   4                                              if(flash)
+  83   4                                              {
+  84   5                                                      if(play == 0)
+  85   5                                                      {
+  86   6                                                              switch(flash)
+  87   6                                                              {
+  88   7                                                                      case 1: 
+  89   7                                                                              hour++;
+  90   7                                                                              if(hour>=24)
+  91   7                                                                                      hour = 0;  
+  92   7                                                                              TIME[2] = hour / 10 * 16 + hour % 10;
+  93   7                                                                              Ds1302_Single_Byte_Write(0x8e, 0x00);
+  94   7                                                                              Ds1302_Single_Byte_Write(0x84, TIME[2]);
+  95   7                                                                              Ds1302_Single_Byte_Write(0x8e, 0x80);
+  96   7                                                                      break;
+  97   7                                                                      case 2:
+  98   7                                                                              min++;
+  99   7                                                                              if(min>=60)
+ 100   7                                                                                      min = 0;   
+ 101   7                                                                              TIME[1] = min / 10 * 16 + min % 10;
+ 102   7                                                                              Ds1302_Single_Byte_Write(0x8e, 0x00);
+ 103   7                                                                              Ds1302_Single_Byte_Write(0x82, TIME[1]);
+ 104   7                                                                              Ds1302_Single_Byte_Write(0x8e, 0x80);
+ 105   7                                                                      break;
+ 106   7                                                                      case 3:
+ 107   7                                                                              sec++;
+ 108   7                                                                              if(sec>=60)
+ 109   7                                                                                      sec = 0;
+ 110   7                                                                              TIME[0] = sec / 10 * 16 + sec % 10;
+ 111   7                                                                              Ds1302_Single_Byte_Write(0x8e, 0x00);
+ 112   7                                                                              Ds1302_Single_Byte_Write(0x80, TIME[0]);
+ 113   7                                                                              Ds1302_Single_Byte_Write(0x8e, 0x80);
+ 114   7                                                                      break;
+ 115   7                                                              }
+ 116   6                                                      }
+ 117   5                                                      else if(play == 2)
+C51 COMPILER V9.01   MAIN                                                                  05/23/2018 21:04:03 PAGE 3   
+
+ 118   5                                                      {
+ 119   6                                                              if(flash == 1)
+ 120   6                                                              {
+ 121   7                                                                      volt_h += 500;
+ 122   7                                                                      if(volt_h > 5000)
+ 123   7                                                                              volt_h = 5000;
+ 124   7                                                              }
+ 125   6                                                              else
+ 126   6                                                              {
+ 127   7                                                                      volt_l += 500;
+ 128   7                                                                      if(volt_l >= volt_h)
+ 129   7                                                                              volt_l = volt_h;
+ 130   7                                                              }
+ 131   6                                                      }
+ 132   5                                              }
+ 133   4                                      break;
+ 134   4                                      case 5:
+ 135   4                                              if(flash)
+ 136   4                                              {
+ 137   5                                                      if(play == 0)
+ 138   5                                                      {
+ 139   6                                                              switch(flash)
+ 140   6                                                              {
+ 141   7                                                                      case 1: 
+ 142   7                                                                              if(hour == 0)
+ 143   7                                                                                      hour = 24;
+ 144   7                                                                              hour--;
+ 145   7                                                                              TIME[2] = hour / 10 * 16 + hour % 10;
+ 146   7                                                                              Ds1302_Single_Byte_Write(0x8e, 0x00);
+ 147   7                                                                              Ds1302_Single_Byte_Write(0x84, TIME[2]);
+ 148   7                                                                              Ds1302_Single_Byte_Write(0x8e, 0x80);
+ 149   7                                                                      break;
+ 150   7                                                                      case 2:
+ 151   7                                                                              if(min == 0)
+ 152   7                                                                                      min = 60;
+ 153   7                                                                              min--;
+ 154   7                                                                              TIME[1] = min / 10 * 16 + min % 10;
+ 155   7                                                                              Ds1302_Single_Byte_Write(0x8e, 0x00);
+ 156   7                                                                              Ds1302_Single_Byte_Write(0x82, TIME[1]);
+ 157   7                                                                              Ds1302_Single_Byte_Write(0x8e, 0x80);
+ 158   7                                                                      break;
+ 159   7                                                                      case 3:
+ 160   7                                                                              if(sec == 0)
+ 161   7                                                                                      sec = 60;
+ 162   7                                                                              sec--;
+ 163   7                                                                              TIME[0] = sec / 10 * 16 + sec % 10;
+ 164   7                                                                              Ds1302_Single_Byte_Write(0x8e, 0x00);
+ 165   7                                                                              Ds1302_Single_Byte_Write(0x80, TIME[0]);
+ 166   7                                                                              Ds1302_Single_Byte_Write(0x8e, 0x80);
+ 167   7                                                                      break;
+ 168   7                                                              }
+ 169   6                                                      }
+ 170   5                                                      else if(play == 2)
+ 171   5                                                      {
+ 172   6                                                              if(flash == 1)
+ 173   6                                                              {
+ 174   7                                                                      volt_h -= 500;
+ 175   7                                                                      if(volt_h <= volt_l)
+ 176   7                                                                              volt_h = volt_l;
+ 177   7                                                              }
+ 178   6                                                              else 
+ 179   6                                                              {
+C51 COMPILER V9.01   MAIN                                                                  05/23/2018 21:04:03 PAGE 4   
+
+ 180   7                                                                      if(volt_l == 0)
+ 181   7                                                                              volt_l = 500;
+ 182   7                                                                      volt_l -= 500;
+ 183   7                                                              }
+ 184   6                                                      }
+ 185   5                                              }
+ 186   4                                      break;
+ 187   4      
+ 188   4      
+ 189   4      
+ 190   4                                      case 4:
+ 191   4                                              play = 1;
+ 192   4                                              if(flash)
+ 193   4                                              {
+ 194   5                                                      Write_eeprom(0x00, volt_h>>8);
+ 195   5                                                      Write_eeprom(0x01, volt_h&0x00ff);
+ 196   5                                                      Write_eeprom(0x02, volt_l>>8);
+ 197   5                                                      Write_eeprom(0x03, volt_l&0x00ff);
+ 198   5      
+ 199   5                                              }
+ 200   4                                              flash = 0;
+ 201   4                                      break;
+ 202   4      
+ 203   4      
+ 204   4                                      case 8:
+ 205   4                                              play = 3;
+ 206   4                                              flash = 0;
+ 207   4                                      break;
+ 208   4      
+ 209   4                                      case 9:
+ 210   4                                              if(play == 4)
+ 211   4                                                      play = 5;
+ 212   4                                              else
+ 213   4                                                      play = 4;
+ 214   4                                              
+ 215   4                                              flash = 0;
+ 216   4                                      break;
+ 217   4                              }
+ 218   3                      }
+ 219   2      
+ 220   2      
+ 221   2                      if(ad_flag == 1)
+ 222   2                      {
+ 223   3                              volt = Read_AD();
+ 224   3                              if((volt >= volt_h) && (volt_larger == 0))
+ 225   3                              {
+ 226   4                                      index = 1;
+ 227   4                                      index_hour = hour;
+ 228   4                                      index_min = min;
+ 229   4                                      index_sec = sec;
+ 230   4                                      volt_smaller = 0;
+ 231   4                                      volt_larger = 1;
+ 232   4      
+ 233   4                                      Write_eeprom(0x04, index);
+ 234   4                                      Write_eeprom(0x05, index_hour);
+ 235   4                                      Write_eeprom(0x06, index_min);
+ 236   4                                      Write_eeprom(0x07, index_sec);
+ 237   4      
+ 238   4                              }
+ 239   3                              else if((volt <= volt_l) && (volt_smaller == 0))
+ 240   3                              {
+ 241   4                                      index = 0;
+C51 COMPILER V9.01   MAIN                                                                  05/23/2018 21:04:03 PAGE 5   
+
+ 242   4                                      index_hour = hour;
+ 243   4                                      index_min = min;
+ 244   4                                      index_sec = sec;
+ 245   4                                      volt_larger = 0;
+ 246   4                                      volt_smaller = 1;
+ 247   4      
+ 248   4                                      Write_eeprom(0x04, index);
+ 249   4                                      Write_eeprom(0x05, index_hour);
+ 250   4                                      Write_eeprom(0x06, index_min);
+ 251   4                                      Write_eeprom(0x07, index_sec);
+ 252   4                              }
+ 253   3      
+ 254   3                              ad_flag = 0;
+ 255   3                      }
+ 256   2                      
+ 257   2              }
+ 258   1              
+ 259   1      
+ 260   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    807    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     22    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      4    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
